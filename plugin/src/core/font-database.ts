@@ -232,7 +232,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Merriweather',
     category: 'serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.45,
     baseTrackingRatio: 0.005,
     displayTightening: -0.015,
     uppercaseBoost: 0.06,
