@@ -299,11 +299,35 @@ select:focus {
   gap: 4px;
 }
 
+.setting-details {
+  padding-left: 18px;
+}
+
+.setting-details summary {
+  font-size: 10px;
+  color: var(--figma-color-text-tertiary, #b3b3b3);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.setting-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.setting-details summary::before {
+  content: '+ ';
+}
+
+.setting-details[open] summary::before {
+  content: '- ';
+}
+
 .setting-hint {
   font-size: 10px;
   color: var(--figma-color-text-tertiary, #b3b3b3);
   line-height: 1.4;
-  padding-left: 18px;
+  margin-top: 2px;
 }
 
 /* --- Changelog --- */
