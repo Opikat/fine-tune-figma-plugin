@@ -518,13 +518,35 @@ const FONT_PROFILES: FontProfile[] = [
   },
 ];
 
+// Font aliases: map variant names to canonical profile
+const FAMILY_ALIASES: Record<string, string> = {
+  'sf pro display': 'sf pro',
+  'sf pro text': 'sf pro',
+  'sf pro rounded': 'sf pro',
+  'roboto flex': 'roboto',
+  'roboto slab': 'roboto',
+  'roboto condensed': 'roboto',
+  'noto sans jp': 'noto sans',
+  'noto sans kr': 'noto sans',
+  'noto sans sc': 'noto sans',
+  'noto sans tc': 'noto sans',
+  'noto serif': 'noto sans',
+  'ibm plex mono': 'ibm plex sans',
+  'ibm plex serif': 'ibm plex sans',
+  'dm serif display': 'dm sans',
+  'dm serif text': 'dm sans',
+  'pt serif': 'pt sans',
+  'space mono': 'space grotesk',
+};
+
 const profileMap = new Map<string, FontProfile>();
 for (const p of FONT_PROFILES) {
   profileMap.set(p.family.toLowerCase(), p);
 }
 
 export function getProfile(family: string): FontProfile | null {
-  return profileMap.get(family.toLowerCase()) ?? null;
+  const key = family.toLowerCase();
+  return profileMap.get(key) ?? profileMap.get(FAMILY_ALIASES[key] || '') ?? null;
 }
 
 export function getFallbackProfile(category: FontCategory): FontProfile {

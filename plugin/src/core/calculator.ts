@@ -4,7 +4,7 @@ import { snapToGrid } from './grid-snapper';
 
 export function detectContext(fontSize: number): TextContext {
   if (fontSize >= 32) return 'display';
-  if (fontSize <= 13) return 'caption';
+  if (fontSize <= 11) return 'caption';
   return 'body';
 }
 
@@ -91,7 +91,9 @@ export function calculate(
   // --- Line height ---
   const bgLineAdj = isDarkBg ? 1.015 : 1.0;
   const lineHeightRaw = fontSize * profile.baseLineHeightRatio * contextMul * (1 + lhAdj) * bgLineAdj;
-  const lineHeight = snapToGrid(lineHeightRaw, gridStep);
+  // Adaptive grid: finer step for small text to avoid huge % jumps (e.g. 13px: 123% vs 154%)
+  const effectiveGrid = fontSize <= 16 ? Math.max(gridStep / 2, 2) : gridStep;
+  const lineHeight = snapToGrid(lineHeightRaw, effectiveGrid);
   const lineHeightPercent = Math.round((lineHeight / fontSize) * 1000) / 10;
 
   // --- Letter spacing ---
