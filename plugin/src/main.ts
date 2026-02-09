@@ -137,16 +137,19 @@ async function applyToNode(node: TextNode, result: TypographyResult): Promise<vo
   node.letterSpacing = { value: result.letterSpacing, unit: 'PIXELS' };
 }
 
-async function applyToTextNodes(textNodes: TextNode[]): Promise<number> {
-  const groups = computeGroups(textNodes);
+async function applyGroups(groups: DeduplicatedGroup[]): Promise<number> {
   let applied = 0;
 
   for (const group of groups) {
     for (const nodeId of group.nodeIds) {
-      const node = figma.getNodeById(nodeId);
-      if (node && node.type === 'TEXT') {
-        await applyToNode(node, group.result);
-        applied++;
+      try {
+        const node = figma.getNodeById(nodeId);
+        if (node && node.type === 'TEXT') {
+          await applyToNode(node, group.result);
+          applied++;
+        }
+      } catch (_) {
+        // skip nodes that fail (e.g. can't load font) — continue with the rest
       }
     }
   }
@@ -211,17 +214,7 @@ function computeGroups(textNodes: TextNode[]): DeduplicatedGroup[] {
   );
 }
 
-function processSelection(): void {
-  const selection = figma.currentPage.selection;
-  const textNodes = collectTextNodes(selection);
-
-  if (textNodes.length === 0) {
-    figma.ui.postMessage({ type: 'no-selection' });
-    return;
-  }
-
-  const groups = computeGroups(textNodes);
-
+function sendGroupsToUI(groups: DeduplicatedGroup[], totalLayers: number, applied: boolean): void {
   figma.ui.postMessage({
     type: 'calculation-results',
     results: groups.map(g => ({
@@ -230,6 +223,7 @@ function processSelection(): void {
       fontInfo: g.result.fontInfo,
       isApproximate: g.result.isApproximate,
       count: g.count,
+      applied,
       before: {
         lineHeight: g.info.currentLineHeight,
         letterSpacing: g.info.currentLetterSpacing,
@@ -244,10 +238,35 @@ function processSelection(): void {
       },
       fontSize: g.info.fontSize,
     })),
-    totalLayers: textNodes.length,
+    totalLayers,
     uniqueGroups: groups.length,
     settings,
   });
+}
+
+function processSelection(): void {
+  const selection = figma.currentPage.selection;
+  const textNodes = collectTextNodes(selection);
+
+  if (textNodes.length === 0) {
+    figma.ui.postMessage({ type: 'no-selection' });
+    return;
+  }
+
+  const groups = computeGroups(textNodes);
+  sendGroupsToUI(groups, textNodes.length, false);
+}
+
+async function processAndApply(textNodes: TextNode[]): Promise<number> {
+  // 1. Compute groups BEFORE applying — captures original "before" values
+  const groups = computeGroups(textNodes);
+
+  // 2. Send preview to UI with correct before/after
+  sendGroupsToUI(groups, textNodes.length, true);
+
+  // 3. Apply values to all nodes
+  const applied = await applyGroups(groups);
+  return applied;
 }
 
 // --- Process all text on page ---
@@ -304,16 +323,16 @@ figma.ui.onmessage = async (msg: { type: string; [key: string]: unknown }) => {
       break;
 
     case 'apply-selected': {
-      const applied = await applyToTextNodes(collectTextNodes(figma.currentPage.selection));
+      const textNodes = collectTextNodes(figma.currentPage.selection);
+      const applied = await processAndApply(textNodes);
       figma.notify(`TypeTune: applied to ${applied} text layer${applied !== 1 ? 's' : ''}`);
-      processSelection();
       break;
     }
 
     case 'apply-page': {
-      const applied = await applyToTextNodes(collectTextNodes(figma.currentPage.children));
+      const textNodes = collectTextNodes(figma.currentPage.children);
+      const applied = await processAndApply(textNodes);
       figma.notify(`TypeTune: applied to ${applied} text layer${applied !== 1 ? 's' : ''} on page`);
-      processSelection();
       break;
     }
 
@@ -349,11 +368,17 @@ figma.ui.onmessage = async (msg: { type: string; [key: string]: unknown }) => {
 
 // Auto-apply on selection change
 figma.on('selectionchange', async () => {
-  if (settings.autoApply) {
-    const textNodes = collectTextNodes(figma.currentPage.selection);
-    if (textNodes.length > 0) {
-      await applyToTextNodes(textNodes);
-    }
+  const textNodes = collectTextNodes(figma.currentPage.selection);
+
+  if (textNodes.length === 0) {
+    figma.ui.postMessage({ type: 'no-selection' });
+    return;
   }
-  processSelection();
+
+  if (settings.autoApply) {
+    // Compute groups first (captures "before"), send to UI, then apply
+    await processAndApply(textNodes);
+  } else {
+    processSelection();
+  }
 });
