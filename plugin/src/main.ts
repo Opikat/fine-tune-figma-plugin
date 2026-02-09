@@ -160,7 +160,7 @@ async function applyGroups(groups: DeduplicatedGroup[]): Promise<number> {
 // --- Dedup key for unique font configurations ---
 
 function fontKey(info: TextLayerInfo): string {
-  return `${info.fontFamily}:${info.fontWeight}:${info.fontSize}`;
+  return `${info.fontFamily}:${info.fontWeight}:${info.fontSize}:${info.isDarkBg ? 'd' : 'l'}:${info.isUppercase ? 'U' : 'l'}`;
 }
 
 // --- Handle selection ---
