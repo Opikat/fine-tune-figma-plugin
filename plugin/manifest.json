@@ -1,6 +1,6 @@
 {
-  "name": "TypeTune",
-  "id": "typetune-typography-optimizer",
+  "name": "FineTune",
+  "id": "finetune-typography-optimizer",
   "api": "1.0.0",
   "main": "dist/main.js",
   "ui": "dist/ui.html",

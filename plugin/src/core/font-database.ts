@@ -3,7 +3,7 @@ import type { FontProfile, FontCategory } from './types';
 const CATEGORY_FALLBACKS: Record<FontCategory, Omit<FontProfile, 'family'>> = {
   'sans-serif': {
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.0,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -11,7 +11,7 @@ const CATEGORY_FALLBACKS: Record<FontCategory, Omit<FontProfile, 'family'>> = {
   },
   'serif': {
     category: 'serif',
-    baseLineHeightRatio: 1.55,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: 0.005,
     displayTightening: -0.015,
     uppercaseBoost: 0.06,
@@ -19,7 +19,7 @@ const CATEGORY_FALLBACKS: Record<FontCategory, Omit<FontProfile, 'family'>> = {
   },
   'mono': {
     category: 'mono',
-    baseLineHeightRatio: 1.6,
+    baseLineHeightRatio: 1.5,
     baseTrackingRatio: 0.0,
     displayTightening: -0.01,
     uppercaseBoost: 0.04,
@@ -41,7 +41,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Inter',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.0,
     displayTightening: -0.022,
     uppercaseBoost: 0.05,
@@ -59,7 +59,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Roboto',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.005,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -75,7 +75,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Open Sans',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.003,
     displayTightening: -0.018,
     uppercaseBoost: 0.05,
@@ -90,7 +90,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Montserrat',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.45,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: -0.005,
     displayTightening: -0.025,
     uppercaseBoost: 0.06,
@@ -108,7 +108,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Lato',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.003,
     displayTightening: -0.018,
     uppercaseBoost: 0.05,
@@ -123,7 +123,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Poppins',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.005,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -141,7 +141,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Noto Sans',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.002,
     displayTightening: -0.018,
     uppercaseBoost: 0.05,
@@ -157,7 +157,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Raleway',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.008,
     displayTightening: -0.025,
     uppercaseBoost: 0.06,
@@ -173,7 +173,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Ubuntu',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.004,
     displayTightening: -0.018,
     uppercaseBoost: 0.05,
@@ -187,7 +187,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Nunito',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.003,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -220,7 +220,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'PT Sans',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.004,
     displayTightening: -0.018,
     uppercaseBoost: 0.05,
@@ -232,7 +232,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Merriweather',
     category: 'serif',
-    baseLineHeightRatio: 1.6,
+    baseLineHeightRatio: 1.45,
     baseTrackingRatio: 0.005,
     displayTightening: -0.015,
     uppercaseBoost: 0.06,
@@ -246,7 +246,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Rubik',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.002,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -263,7 +263,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Work Sans',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.003,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -281,7 +281,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'DM Sans',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.45,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: -0.003,
     displayTightening: -0.022,
     uppercaseBoost: 0.05,
@@ -296,7 +296,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Manrope',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.002,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -328,7 +328,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'IBM Plex Sans',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.004,
     displayTightening: -0.018,
     uppercaseBoost: 0.05,
@@ -345,7 +345,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Jost',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.45,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: 0.0,
     displayTightening: -0.022,
     uppercaseBoost: 0.06,
@@ -364,7 +364,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'SF Pro',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.47,
+    baseLineHeightRatio: 1.37,
     baseTrackingRatio: 0.0,
     displayTightening: -0.025,
     uppercaseBoost: 0.05,
@@ -383,7 +383,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'PP Neue Montreal',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.45,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: -0.005,
     displayTightening: -0.025,
     uppercaseBoost: 0.06,
@@ -397,7 +397,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Golos',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.003,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -411,7 +411,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Graphik',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.45,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: 0.002,
     displayTightening: -0.025,
     uppercaseBoost: 0.06,
@@ -427,7 +427,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Gilroy',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.45,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: 0.0,
     displayTightening: -0.025,
     uppercaseBoost: 0.06,
@@ -446,7 +446,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'TT Norms Pro',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.45,
+    baseLineHeightRatio: 1.35,
     baseTrackingRatio: 0.002,
     displayTightening: -0.022,
     uppercaseBoost: 0.05,
@@ -462,7 +462,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Basis Grotesque',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.005,
     displayTightening: -0.02,
     uppercaseBoost: 0.05,
@@ -477,7 +477,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Suisse Int\'l',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.003,
     displayTightening: -0.022,
     uppercaseBoost: 0.05,
@@ -506,7 +506,7 @@ const FONT_PROFILES: FontProfile[] = [
   {
     family: 'Helios',
     category: 'sans-serif',
-    baseLineHeightRatio: 1.5,
+    baseLineHeightRatio: 1.4,
     baseTrackingRatio: 0.004,
     displayTightening: -0.018,
     uppercaseBoost: 0.05,

@@ -1,22 +1,19 @@
 import { h, render, Fragment } from 'preact';
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 
-type BgMode = 'auto' | 'light' | 'dark';
-type TextContext = 'display' | 'body' | 'caption';
 type ExportFormat = 'css' | 'css-fluid' | 'ios' | 'android';
 
 interface Settings {
-  gridStep: number;
-  bgMode: BgMode;
-  contextOverride: TextContext | 'auto';
   autoApply: boolean;
   writeVariables: boolean;
 }
 
 interface ResultEntry {
   nodeId: string;
+  nodeIds: string[];
   fontInfo: string;
   isApproximate: boolean;
+  count: number;
   before: { lineHeight: string; letterSpacing: string };
   after: {
     lineHeight: number;
@@ -31,15 +28,14 @@ interface ResultEntry {
 
 function App() {
   const [settings, setSettings] = useState<Settings>({
-    gridStep: 4,
-    bgMode: 'auto',
-    contextOverride: 'auto',
     autoApply: false,
     writeVariables: false,
   });
   const [results, setResults] = useState<ResultEntry[]>([]);
+  const [totalLayers, setTotalLayers] = useState(0);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('css');
   const [exportCode, setExportCode] = useState('');
+  const [selectedExportIdx, setSelectedExportIdx] = useState(0);
   const [copied, setCopied] = useState(false);
   const [hasSelection, setHasSelection] = useState(true);
 
@@ -58,8 +54,9 @@ function App() {
           break;
         case 'calculation-results':
           setResults(msg.results);
+          setTotalLayers(msg.totalLayers || msg.results.length);
           setHasSelection(true);
-          // Request export for first node
+          setSelectedExportIdx(0);
           if (msg.results.length > 0) {
             parent.postMessage({
               pluginMessage: {
@@ -84,11 +81,11 @@ function App() {
     return () => window.removeEventListener('message', handler);
   }, [exportFormat]);
 
-  const updateSetting = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
+  const updateSetting = (key: keyof Settings, value: boolean) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     parent.postMessage({ pluginMessage: { type: 'update-settings', settings: { [key]: value } } }, '*');
-  }, [settings]);
+  };
 
   const handleApplySelected = () => {
     parent.postMessage({ pluginMessage: { type: 'apply-selected' } }, '*');
@@ -100,12 +97,27 @@ function App() {
 
   const handleExportTab = (format: ExportFormat) => {
     setExportFormat(format);
-    if (results.length > 0) {
+    const r = results[selectedExportIdx];
+    if (r) {
       parent.postMessage({
         pluginMessage: {
           type: 'export-code',
-          nodeId: results[0].nodeId,
+          nodeId: r.nodeId,
           format,
+        },
+      }, '*');
+    }
+  };
+
+  const handleSelectExport = (idx: number) => {
+    setSelectedExportIdx(idx);
+    const r = results[idx];
+    if (r) {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'export-code',
+          nodeId: r.nodeId,
+          format: exportFormat,
         },
       }, '*');
     }
@@ -119,56 +131,8 @@ function App() {
     });
   };
 
-  const firstResult = results[0];
-
   return (
     <>
-      {/* Controls */}
-      <div class="section">
-        <div class="controls-row">
-          <label>Context:</label>
-          <select
-            value={settings.contextOverride}
-            onChange={(e) => updateSetting('contextOverride', (e.target as HTMLSelectElement).value as TextContext | 'auto')}
-          >
-            <option value="auto">Auto</option>
-            <option value="display">Display</option>
-            <option value="body">Body</option>
-            <option value="caption">Caption</option>
-          </select>
-
-          <label>Grid:</label>
-          <select
-            value={settings.gridStep}
-            onChange={(e) => updateSetting('gridStep', Number((e.target as HTMLSelectElement).value))}
-          >
-            <option value={1}>Off</option>
-            <option value={2}>2px</option>
-            <option value={4}>4px</option>
-            <option value={8}>8px</option>
-          </select>
-        </div>
-
-        <div class="controls-row">
-          <label>Background:</label>
-          <div class="radio-group">
-            {(['auto', 'light', 'dark'] as BgMode[]).map((mode) => (
-              <label key={mode}>
-                <input
-                  type="radio"
-                  name="bgMode"
-                  checked={settings.bgMode === mode}
-                  onChange={() => updateSetting('bgMode', mode)}
-                />
-                {mode === 'auto' ? 'Auto' : mode === 'light' ? 'Light' : 'Dark'}
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div class="divider" />
-
       {/* Results */}
       {!hasSelection ? (
         <div class="empty-state">
@@ -189,46 +153,57 @@ function App() {
         <>
           <div class="section">
             <div class="section-title">
-              Result{results.length > 1 ? ` (${results.length} layers)` : ''}
+              {results.length === 1
+                ? 'Result'
+                : `${results.length} unique style${results.length > 1 ? 's' : ''} (${totalLayers} layer${totalLayers !== 1 ? 's' : ''})`}
             </div>
-            {firstResult && (
-              <div class="result-card">
-                <div class="font-info">
-                  {firstResult.fontInfo}
-                  {firstResult.isApproximate && (
-                    <span class="approximate-badge">approx</span>
-                  )}
+            <div class="results-list">
+              {results.map((r, idx) => (
+                <div
+                  key={r.nodeId}
+                  class={`result-card${results.length > 1 && idx === selectedExportIdx ? ' result-card-selected' : ''}`}
+                  onClick={() => results.length > 1 && handleSelectExport(idx)}
+                >
+                  <div class="font-info">
+                    {r.fontInfo}
+                    {r.count > 1 && (
+                      <span class="count-badge">{r.count}x</span>
+                    )}
+                    {r.isApproximate && (
+                      <span class="approximate-badge">approx</span>
+                    )}
+                  </div>
+                  <div class="result-row">
+                    <span class="result-label">Line-height</span>
+                    <span>
+                      <span class="result-value">
+                        {r.after.lineHeight}px
+                      </span>
+                      <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
+                        ({r.after.lineHeightPercent}%)
+                      </span>
+                      <span class="result-prev">
+                        {r.before.lineHeight}
+                      </span>
+                    </span>
+                  </div>
+                  <div class="result-row">
+                    <span class="result-label">Letter-spacing</span>
+                    <span>
+                      <span class="result-value">
+                        {r.after.letterSpacing}px
+                      </span>
+                      <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
+                        ({r.after.letterSpacingPercent}%)
+                      </span>
+                      <span class="result-prev">
+                        {r.before.letterSpacing}
+                      </span>
+                    </span>
+                  </div>
                 </div>
-                <div class="result-row">
-                  <span class="result-label">Line-height</span>
-                  <span>
-                    <span class="result-value">
-                      {firstResult.after.lineHeight}px
-                    </span>
-                    <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
-                      ({firstResult.after.lineHeightPercent}%)
-                    </span>
-                    <span class="result-prev">
-                      {firstResult.before.lineHeight}
-                    </span>
-                  </span>
-                </div>
-                <div class="result-row">
-                  <span class="result-label">Letter-spacing</span>
-                  <span>
-                    <span class="result-value">
-                      {firstResult.after.letterSpacing}px
-                    </span>
-                    <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
-                      ({firstResult.after.letterSpacingPercent}%)
-                    </span>
-                    <span class="result-prev">
-                      {firstResult.before.letterSpacing}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
 
           {/* Apply buttons */}
@@ -245,7 +220,14 @@ function App() {
 
           {/* Export */}
           <div class="section">
-            <div class="section-title">Export</div>
+            <div class="section-title">
+              Export
+              {results.length > 1 && (
+                <span style="font-weight: 400; text-transform: none; margin-left: 4px">
+                  — {results[selectedExportIdx].fontInfo}
+                </span>
+              )}
+            </div>
             <div class="export-tabs">
               {([
                 ['css', 'CSS'],
@@ -279,23 +261,40 @@ function App() {
       {/* Settings */}
       <div class="section">
         <div class="section-title">Settings</div>
-        <div class="checkbox-row">
-          <input
-            type="checkbox"
-            id="writeVariables"
-            checked={settings.writeVariables}
-            onChange={(e) => updateSetting('writeVariables', (e.target as HTMLInputElement).checked)}
-          />
-          <label for="writeVariables">Write to Variables</label>
+
+        <div class="setting-item">
+          <div class="checkbox-row">
+            <input
+              type="checkbox"
+              id="autoApply"
+              checked={settings.autoApply}
+              onChange={(e) => updateSetting('autoApply', (e.target as HTMLInputElement).checked)}
+            />
+            <label for="autoApply">Auto-apply on selection change</label>
+          </div>
+          <div class="setting-hint">
+            When enabled, optimized values are immediately applied
+            to every text layer you select — no need to click "Apply".
+            Disable if you want to preview values first.
+          </div>
         </div>
-        <div class="checkbox-row">
-          <input
-            type="checkbox"
-            id="autoApply"
-            checked={settings.autoApply}
-            onChange={(e) => updateSetting('autoApply', (e.target as HTMLInputElement).checked)}
-          />
-          <label for="autoApply">Auto-apply on selection change</label>
+
+        <div class="setting-item">
+          <div class="checkbox-row">
+            <input
+              type="checkbox"
+              id="writeVariables"
+              checked={settings.writeVariables}
+              onChange={(e) => updateSetting('writeVariables', (e.target as HTMLInputElement).checked)}
+            />
+            <label for="writeVariables">Save to Figma Variables</label>
+          </div>
+          <div class="setting-hint">
+            Creates a "FineTune" variable collection with line-height
+            and letter-spacing values for each text style. Useful for
+            design systems — developers can read these variables directly.
+            Includes Light and Dark mode variants.
+          </div>
         </div>
       </div>
     </>

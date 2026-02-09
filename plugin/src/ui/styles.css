@@ -92,11 +92,34 @@ select:focus {
   accent-color: var(--figma-color-border-brand, #0d99ff);
 }
 
+/* --- Results list --- */
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
 /* --- Result card --- */
 .result-card {
   background: var(--figma-color-bg-secondary, #f5f5f5);
   border-radius: 8px;
   padding: 10px 12px;
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.result-card-selected {
+  border-color: var(--figma-color-border-brand, #0d99ff);
+}
+
+.results-list .result-card {
+  cursor: pointer;
+}
+
+.results-list .result-card:hover {
+  background: var(--figma-color-bg-tertiary, #eee);
 }
 
 .font-info {
@@ -106,6 +129,15 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.count-badge {
+  font-size: 9px;
+  background: var(--figma-color-bg-brand-tertiary, #e6f4ff);
+  color: var(--figma-color-text-brand, #0d99ff);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
 }
 
 .approximate-badge {
@@ -259,6 +291,19 @@ select:focus {
 .checkbox-row label {
   font-size: 11px;
   cursor: pointer;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setting-hint {
+  font-size: 10px;
+  color: var(--figma-color-text-tertiary, #b3b3b3);
+  line-height: 1.4;
+  padding-left: 18px;
 }
 
 /* --- Empty state --- */

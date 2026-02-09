@@ -12,9 +12,9 @@ function getContextMultiplier(context: TextContext, fontSize: number): number {
   switch (context) {
     case 'display': {
       // Regressive scale: larger display text → tighter line-height
-      // Targets: 32px → ~130%, 48px → ~120%, 64px → ~115%, 96px → ~112%, 128px+ → ~110%
-      const maxMul = 0.87; // at 32px → 1.5 * 0.87 = 130%
-      const minMul = 0.73; // at 128px+ → 1.5 * 0.73 = 110%
+      // With baseRatio ~1.4: 32px → ~130%, 48px → ~120%, 96px → ~112%, 128px+ → ~110%
+      const maxMul = 0.93; // at 32px → 1.4 * 0.93 = 130%
+      const minMul = 0.79; // at 128px+ → 1.4 * 0.79 = 110%
       if (fontSize >= 128) return minMul;
       const t = (fontSize - 32) / 96;
       return maxMul - t * (maxMul - minMul);

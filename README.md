@@ -1,41 +1,68 @@
-# opikat-personal-experiments
-personal projects
+# FineTune — Typography Auto-Tuning for Figma
 
-## Figma Console MCP
+Figma plugin that calculates optimal line-height and letter-spacing based on font metrics, weight, size, background brightness, and baseline grid — then exports in code-ready units.
 
-This project is configured with [figma-console-mcp](https://github.com/southleft/figma-console-mcp) for AI-assisted Figma design workflows.
+**TypeBalance picks pretty numbers. FineTune picks pretty numbers that work in code.**
 
-### Setup
+## Features
 
-1. **Register a Figma app** at https://www.figma.com/developers/apps and note your `client_id`, `client_secret`, and `redirect_uri`.
+- **30 hand-tuned font profiles** — Inter, Roboto, SF Pro, PP Neue Montreal, Druk, and 25 more. Any unknown font uses category-based fallbacks.
+- **Regressive line-height scale** — ~110% for display type, ~140% for body, ~155% for captions. Follows Bringhurst / Material Design 3 paradigm.
+- **4px baseline grid snap** — line-height always aligns to vertical rhythm.
+- **Background-aware** — auto-detects solid, gradient, and image fills. Adjusts for dark/light.
+- **Multi-layer batch** — select a frame with 50 text layers, see deduplicated result cards grouped by font+weight+size. Apply all at once.
+- **Auto-apply** — toggle on and values apply instantly when you select text. No extra clicks.
+- **Code export** — CSS (`em`), CSS Fluid (`clamp()`), iOS (`kern`/`lineHeightMultiple`), Android (`letterSpacing`/`lineSpacingMultiplier`).
 
-2. **Complete the OAuth authorization flow** — direct the user to:
-   ```
-   https://www.figma.com/oauth?client_id=<CLIENT_ID>&redirect_uri=<REDIRECT_URI>&scope=files:read&state=<STATE>&response_type=code
-   ```
-   Figma will redirect back with a `code` parameter.
+## Quick start
 
-3. **Exchange the code for an access token:**
-   ```bash
-   export FIGMA_CLIENT_ID="your_client_id"
-   export FIGMA_CLIENT_SECRET="your_client_secret"
-   export FIGMA_REDIRECT_URI="your_redirect_uri"
-   export FIGMA_AUTH_CODE="code_from_callback"
-
-   ./scripts/get-figma-token.sh
-   ```
-
-4. **Set the token** for the MCP server:
-   ```bash
-   export FIGMA_ACCESS_TOKEN="<token from step 3>"
-   ```
-
-5. **Restart Claude Code** — the MCP server will start automatically via `.mcp.json`.
-
-### For Figma for Government
-
-Set `FIGMA_GOV=1` before running the script:
 ```bash
-export FIGMA_GOV=1
-./scripts/get-figma-token.sh
+cd plugin
+npm install
+npm run build
 ```
+
+In Figma: **Plugins** > **Development** > **Import plugin from manifest** > select `plugin/manifest.json`.
+
+## Usage
+
+1. Select any text layer or frame containing text layers
+2. See calculated values for each unique font configuration
+3. Click **Apply to selected** or enable **Auto-apply** in settings
+4. Switch export tab (CSS / Fluid / iOS / Android) and copy code
+
+## Line-height scale
+
+| Context | Font size | Target |
+|---------|-----------|--------|
+| Display (large) | 96-128px+ | ~110% |
+| Display | 48-64px | ~120% |
+| Display (small) | 32-48px | ~125-130% |
+| Body | 14-31px | ~140% |
+| Caption | ≤13px | ~155% |
+
+## Settings
+
+- **Auto-apply on selection change** — optimized values are immediately applied to every text layer you select. Disable to preview first.
+- **Save to Figma Variables** — creates a "FineTune" variable collection with line-height and letter-spacing tokens. Includes Light and Dark mode variants.
+
+## Docs
+
+- [Product description](docs/product.md) — detailed overview, architecture, roadmap
+- [PRD](docs/prd-typography-plugin.md) — requirements, formulas, competitive analysis
+
+## Development
+
+```bash
+cd plugin
+npm run watch    # rebuild on file changes
+npm run build    # production build
+```
+
+Build output: `plugin/dist/main.js` + `plugin/dist/ui.html` (single file with inlined JS+CSS).
+
+Target: `es2017` (Figma sandbox constraint — no `??`, `?.`).
+
+## License
+
+MIT

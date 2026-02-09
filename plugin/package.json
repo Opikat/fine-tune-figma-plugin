@@ -1,5 +1,5 @@
 {
-  "name": "typetune",
+  "name": "finetune",
   "version": "0.1.0",
   "description": "Figma plugin for auto-tuning line-height and letter-spacing with code-ready export",
   "scripts": {

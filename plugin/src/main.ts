@@ -13,12 +13,15 @@ import type {
   BgMode,
 } from './core';
 
-figma.showUI(__html__, { width: 360, height: 580 });
+figma.showUI(__html__, { width: 360, height: 640 });
+
+const GRID_STEP = 4;
+const CONTEXT_OVERRIDE: 'auto' = 'auto';
 
 const DEFAULT_SETTINGS: PluginSettings = {
-  gridStep: 4,
+  gridStep: GRID_STEP,
   bgMode: 'auto',
-  contextOverride: 'auto',
+  contextOverride: CONTEXT_OVERRIDE,
   autoApply: false,
   writeVariables: false,
 };
@@ -26,14 +29,14 @@ const DEFAULT_SETTINGS: PluginSettings = {
 let settings: PluginSettings = { ...DEFAULT_SETTINGS };
 
 async function loadSettings(): Promise<void> {
-  const saved = await figma.clientStorage.getAsync('typetune-settings');
+  const saved = await figma.clientStorage.getAsync('finetune-settings');
   if (saved) {
     settings = { ...DEFAULT_SETTINGS, ...saved };
   }
 }
 
 async function saveSettings(): Promise<void> {
-  await figma.clientStorage.setAsync('typetune-settings', settings);
+  await figma.clientStorage.setAsync('finetune-settings', settings);
 }
 
 // --- Text node analysis ---
@@ -94,11 +97,7 @@ function analyzeTextNode(node: TextNode): TextLayerInfo | null {
   const textCase = node.textCase;
   const isUppercase = textCase === 'UPPER';
 
-  const darkBg = settings.bgMode === 'dark'
-    ? true
-    : settings.bgMode === 'light'
-      ? false
-      : isDarkBackground(node);
+  const darkBg = isDarkBackground(node);
 
   return {
     nodeId: node.id,
@@ -138,25 +137,57 @@ async function applyToNode(node: TextNode, result: TypographyResult): Promise<vo
   node.letterSpacing = { value: result.letterSpacing, unit: 'PIXELS' };
 }
 
-// --- Handle selection ---
+async function applyGroups(groups: DeduplicatedGroup[]): Promise<number> {
+  let applied = 0;
 
-function processSelection(): void {
-  const selection = figma.currentPage.selection;
-  const textNodes = collectTextNodes(selection);
-
-  if (textNodes.length === 0) {
-    figma.ui.postMessage({ type: 'no-selection' });
-    return;
+  for (const group of groups) {
+    for (const nodeId of group.nodeIds) {
+      try {
+        const node = figma.getNodeById(nodeId);
+        if (node && node.type === 'TEXT') {
+          await applyToNode(node, group.result);
+          applied++;
+        }
+      } catch (_) {
+        // skip nodes that fail (e.g. can't load font) — continue with the rest
+      }
+    }
   }
 
-  const results: Array<{
-    info: TextLayerInfo;
-    result: TypographyResult;
-  }> = [];
+  return applied;
+}
+
+// --- Dedup key for unique font configurations ---
+
+function fontKey(info: TextLayerInfo): string {
+  return `${info.fontFamily}:${info.fontWeight}:${info.fontSize}`;
+}
+
+// --- Handle selection ---
+
+interface DeduplicatedGroup {
+  key: string;
+  info: TextLayerInfo;
+  result: TypographyResult;
+  nodeIds: string[];
+  count: number;
+}
+
+function computeGroups(textNodes: TextNode[]): DeduplicatedGroup[] {
+  const groupMap = new Map<string, DeduplicatedGroup>();
 
   for (const node of textNodes) {
     const info = analyzeTextNode(node);
     if (!info) continue;
+
+    const k = fontKey(info);
+    const existing = groupMap.get(k);
+
+    if (existing) {
+      existing.nodeIds.push(info.nodeId);
+      existing.count++;
+      continue;
+    }
 
     const input: TypographyInput = {
       fontFamily: info.fontFamily,
@@ -168,31 +199,74 @@ function processSelection(): void {
     };
 
     const result = calculate(input, settings.contextOverride, settings.gridStep);
-    results.push({ info, result });
+    groupMap.set(k, {
+      key: k,
+      info,
+      result,
+      nodeIds: [info.nodeId],
+      count: 1,
+    });
   }
 
+  // Sort: largest font size first, then by family name
+  return Array.from(groupMap.values()).sort((a, b) =>
+    b.info.fontSize - a.info.fontSize || a.info.fontFamily.localeCompare(b.info.fontFamily)
+  );
+}
+
+function sendGroupsToUI(groups: DeduplicatedGroup[], totalLayers: number, applied: boolean): void {
   figma.ui.postMessage({
     type: 'calculation-results',
-    results: results.map(r => ({
-      nodeId: r.info.nodeId,
-      fontInfo: r.result.fontInfo,
-      isApproximate: r.result.isApproximate,
+    results: groups.map(g => ({
+      nodeIds: g.nodeIds,
+      nodeId: g.nodeIds[0],
+      fontInfo: g.result.fontInfo,
+      isApproximate: g.result.isApproximate,
+      count: g.count,
+      applied,
       before: {
-        lineHeight: r.info.currentLineHeight,
-        letterSpacing: r.info.currentLetterSpacing,
+        lineHeight: g.info.currentLineHeight,
+        letterSpacing: g.info.currentLetterSpacing,
       },
       after: {
-        lineHeight: r.result.lineHeight,
-        lineHeightPercent: r.result.lineHeightPercent,
-        lineHeightRaw: r.result.lineHeightRaw,
-        letterSpacing: r.result.letterSpacing,
-        letterSpacingEm: r.result.letterSpacingEm,
-        letterSpacingPercent: r.result.letterSpacingPercent,
+        lineHeight: g.result.lineHeight,
+        lineHeightPercent: g.result.lineHeightPercent,
+        lineHeightRaw: g.result.lineHeightRaw,
+        letterSpacing: g.result.letterSpacing,
+        letterSpacingEm: g.result.letterSpacingEm,
+        letterSpacingPercent: g.result.letterSpacingPercent,
       },
-      fontSize: r.info.fontSize,
+      fontSize: g.info.fontSize,
     })),
+    totalLayers,
+    uniqueGroups: groups.length,
     settings,
   });
+}
+
+function processSelection(): void {
+  const selection = figma.currentPage.selection;
+  const textNodes = collectTextNodes(selection);
+
+  if (textNodes.length === 0) {
+    figma.ui.postMessage({ type: 'no-selection' });
+    return;
+  }
+
+  const groups = computeGroups(textNodes);
+  sendGroupsToUI(groups, textNodes.length, false);
+}
+
+async function processAndApply(textNodes: TextNode[]): Promise<number> {
+  // 1. Compute groups BEFORE applying — captures original "before" values
+  const groups = computeGroups(textNodes);
+
+  // 2. Send preview to UI with correct before/after
+  sendGroupsToUI(groups, textNodes.length, true);
+
+  // 3. Apply values to all nodes
+  const applied = await applyGroups(groups);
+  return applied;
 }
 
 // --- Process all text on page ---
@@ -249,57 +323,16 @@ figma.ui.onmessage = async (msg: { type: string; [key: string]: unknown }) => {
       break;
 
     case 'apply-selected': {
-      const selection = figma.currentPage.selection;
-      const textNodes = collectTextNodes(selection);
-      let applied = 0;
-
-      for (const node of textNodes) {
-        const info = analyzeTextNode(node);
-        if (!info) continue;
-
-        const input: TypographyInput = {
-          fontFamily: info.fontFamily,
-          fontSize: info.fontSize,
-          fontWeight: info.fontWeight,
-          fontStyle: info.fontStyle,
-          isUppercase: info.isUppercase,
-          isDarkBg: info.isDarkBg,
-        };
-
-        const result = calculate(input, settings.contextOverride, settings.gridStep);
-        await applyToNode(node, result);
-        applied++;
-      }
-
-      figma.notify(`TypeTune: applied to ${applied} text layer${applied !== 1 ? 's' : ''}`);
-      processSelection();
+      const textNodes = collectTextNodes(figma.currentPage.selection);
+      const applied = await processAndApply(textNodes);
+      figma.notify(`FineTune: applied to ${applied} text layer${applied !== 1 ? 's' : ''}`);
       break;
     }
 
     case 'apply-page': {
-      const allText = collectTextNodes(figma.currentPage.children);
-      let applied = 0;
-
-      for (const node of allText) {
-        const info = analyzeTextNode(node);
-        if (!info) continue;
-
-        const input: TypographyInput = {
-          fontFamily: info.fontFamily,
-          fontSize: info.fontSize,
-          fontWeight: info.fontWeight,
-          fontStyle: info.fontStyle,
-          isUppercase: info.isUppercase,
-          isDarkBg: info.isDarkBg,
-        };
-
-        const result = calculate(input, settings.contextOverride, settings.gridStep);
-        await applyToNode(node, result);
-        applied++;
-      }
-
-      figma.notify(`TypeTune: applied to ${applied} text layer${applied !== 1 ? 's' : ''} on page`);
-      processSelection();
+      const textNodes = collectTextNodes(figma.currentPage.children);
+      const applied = await processAndApply(textNodes);
+      figma.notify(`FineTune: applied to ${applied} text layer${applied !== 1 ? 's' : ''} on page`);
       break;
     }
 
@@ -334,6 +367,18 @@ figma.ui.onmessage = async (msg: { type: string; [key: string]: unknown }) => {
 };
 
 // Auto-apply on selection change
-figma.on('selectionchange', () => {
-  processSelection();
+figma.on('selectionchange', async () => {
+  const textNodes = collectTextNodes(figma.currentPage.selection);
+
+  if (textNodes.length === 0) {
+    figma.ui.postMessage({ type: 'no-selection' });
+    return;
+  }
+
+  if (settings.autoApply) {
+    // Compute groups first (captures "before"), send to UI, then apply
+    await processAndApply(textNodes);
+  } else {
+    processSelection();
+  }
 });
