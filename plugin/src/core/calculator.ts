@@ -94,7 +94,7 @@ export function calculate(
   // Adaptive grid: finer step for small text to avoid huge % jumps (e.g. 13px: 123% vs 154%)
   const effectiveGrid = fontSize <= 16 ? Math.max(gridStep / 2, 2) : gridStep;
   const lineHeight = snapToGrid(lineHeightRaw, effectiveGrid);
-  const lineHeightPercent = Math.round((lineHeight / fontSize) * 1000) / 10;
+  const lineHeightPercent = Math.round((lineHeight / fontSize) * 100);
 
   // --- Letter spacing ---
   const sizeScale = getSizeScale(fontSize);
@@ -103,7 +103,7 @@ export function calculate(
   const bgTrackAdj = isDarkBg ? 0.015 : 0;
 
   const trackingRatio = profile.baseTrackingRatio + sizeScale + displayAdj + trAdj + caseAdj + bgTrackAdj;
-  const letterSpacing = Math.round(fontSize * trackingRatio * 100) / 100;
+  const letterSpacing = Math.round(fontSize * trackingRatio * 10) / 10;
   const letterSpacingEm = Math.round(trackingRatio * 10000) / 10000;
   const letterSpacingPercent = Math.round(trackingRatio * 1000) / 10;
 
