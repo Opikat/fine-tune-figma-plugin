@@ -31,6 +31,7 @@ interface ResultEntry {
     letterSpacingPercent: number;
   };
   fontSize: number;
+  isAlreadyGood: boolean;
 }
 
 function copyText(text: string): boolean {
@@ -193,7 +194,7 @@ function App() {
               {results.map((r, idx) => (
                 <div
                   key={r.nodeId}
-                  class={`result-card${results.length > 1 && idx === selectedExportIdx ? ' result-card-selected' : ''}`}
+                  class={`result-card${results.length > 1 && idx === selectedExportIdx ? ' result-card-selected' : ''}${r.isAlreadyGood ? ' result-card-good' : ''}`}
                   onClick={() => results.length > 1 && handleSelectExport(idx)}
                 >
                   <div class="font-info">
@@ -201,38 +202,47 @@ function App() {
                     {r.count > 1 && (
                       <span class="count-badge">{r.count}x</span>
                     )}
-                    {r.isApproximate && (
+                    {r.isAlreadyGood && (
+                      <span class="good-badge">good</span>
+                    )}
+                    {r.isApproximate && !r.isAlreadyGood && (
                       <span class="approximate-badge">approx</span>
                     )}
                   </div>
-                  <div class="result-row">
-                    <span class="result-label">Line-height</span>
-                    <span>
-                      <span class="result-value">
-                        {r.after.lineHeight}px
-                      </span>
-                      <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
-                        ({r.after.lineHeightPercent}%)
-                      </span>
-                      <span class="result-prev">
-                        {r.before.lineHeight}
-                      </span>
-                    </span>
-                  </div>
-                  <div class="result-row">
-                    <span class="result-label">Letter-spacing</span>
-                    <span>
-                      <span class="result-value">
-                        {r.after.letterSpacing}px
-                      </span>
-                      <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
-                        ({r.after.letterSpacingPercent}%)
-                      </span>
-                      <span class="result-prev">
-                        {r.before.letterSpacing}
-                      </span>
-                    </span>
-                  </div>
+                  {r.isAlreadyGood ? (
+                    <div class="good-message">Values are already well-tuned</div>
+                  ) : (
+                    <>
+                      <div class="result-row">
+                        <span class="result-label">Line-height</span>
+                        <span>
+                          <span class="result-value">
+                            {r.after.lineHeight}px
+                          </span>
+                          <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
+                            ({r.after.lineHeightPercent}%)
+                          </span>
+                          <span class="result-prev">
+                            {r.before.lineHeight}
+                          </span>
+                        </span>
+                      </div>
+                      <div class="result-row">
+                        <span class="result-label">Letter-spacing</span>
+                        <span>
+                          <span class="result-value">
+                            {r.after.letterSpacing}px
+                          </span>
+                          <span style="color: var(--figma-color-text-secondary, #888); margin-left: 4px">
+                            ({r.after.letterSpacingPercent}%)
+                          </span>
+                          <span class="result-prev">
+                            {r.before.letterSpacing}
+                          </span>
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

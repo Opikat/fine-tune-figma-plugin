@@ -52,6 +52,8 @@ interface TextLayerInfo {
   isDarkBg: boolean;
   currentLineHeight: string;
   currentLetterSpacing: string;
+  currentLineHeightPx: number;
+  currentLetterSpacingPx: number;
 }
 
 function weightFromStyle(style: string): number {
@@ -88,6 +90,29 @@ function describeLetterSpacing(node: TextNode): string {
   return '0';
 }
 
+function getLineHeightPx(node: TextNode): number {
+  const lh = node.lineHeight as LineHeight;
+  const fs = (typeof node.fontSize === 'symbol') ? 16 : node.fontSize as number;
+  if (typeof lh === 'symbol') return fs * 1.2; // mixed → assume default
+  if ('unit' in lh) {
+    if (lh.unit === 'AUTO') return fs * 1.2; // Figma auto ≈ 120%
+    if (lh.unit === 'PERCENT') return fs * lh.value / 100;
+    return lh.value; // PIXELS
+  }
+  return fs * 1.2;
+}
+
+function getLetterSpacingPx(node: TextNode): number {
+  const ls = node.letterSpacing as LetterSpacing;
+  const fs = (typeof node.fontSize === 'symbol') ? 16 : node.fontSize as number;
+  if (typeof ls === 'symbol') return 0;
+  if ('unit' in ls) {
+    if (ls.unit === 'PERCENT') return fs * ls.value / 100;
+    return ls.value; // PIXELS
+  }
+  return 0;
+}
+
 function analyzeTextNode(node: TextNode): TextLayerInfo | null {
   const fontName = node.fontName;
   if (typeof fontName === 'symbol') return null; // mixed fonts
@@ -110,6 +135,8 @@ function analyzeTextNode(node: TextNode): TextLayerInfo | null {
     isDarkBg: darkBg,
     currentLineHeight: describeLineHeight(node),
     currentLetterSpacing: describeLetterSpacing(node),
+    currentLineHeightPx: getLineHeightPx(node),
+    currentLetterSpacingPx: getLetterSpacingPx(node),
   };
 }
 
@@ -142,6 +169,9 @@ async function applyGroups(groups: DeduplicatedGroup[], styledNodeIds: Set<strin
   let applied = 0;
 
   for (const group of groups) {
+    // Skip groups that are already within tolerance
+    if (group.isAlreadyGood) continue;
+
     for (const node of group.nodes) {
       // Skip nodes whose style was already updated — they inherit new values
       if (styledNodeIds.has(node.id)) {
@@ -276,6 +306,25 @@ interface DeduplicatedGroup {
   nodeIds: string[];
   nodes: TextNode[];
   count: number;
+  isAlreadyGood: boolean;
+}
+
+function checkAlreadyGood(info: TextLayerInfo, result: TypographyResult): boolean {
+  const lhTarget = result.lineHeight;
+  const lsTarget = result.letterSpacing;
+  const lhCurrent = info.currentLineHeightPx;
+  const lsCurrent = info.currentLetterSpacingPx;
+
+  // Line-height: within 5% of target
+  const lhOk = lhTarget > 0
+    ? Math.abs(lhCurrent - lhTarget) / lhTarget <= 0.05
+    : Math.abs(lhCurrent - lhTarget) < 0.5;
+
+  // Letter-spacing: within 5% or ±0.2px for small values
+  const lsThreshold = Math.max(0.2, Math.abs(lsTarget) * 0.05);
+  const lsOk = Math.abs(lsCurrent - lsTarget) <= lsThreshold;
+
+  return lhOk && lsOk;
 }
 
 function computeGroups(textNodes: TextNode[]): DeduplicatedGroup[] {
@@ -312,6 +361,7 @@ function computeGroups(textNodes: TextNode[]): DeduplicatedGroup[] {
       nodeIds: [info.nodeId],
       nodes: [node],
       count: 1,
+      isAlreadyGood: checkAlreadyGood(info, result),
     });
   }
 
@@ -344,6 +394,7 @@ function sendGroupsToUI(groups: DeduplicatedGroup[], totalLayers: number, applie
         letterSpacingPercent: g.result.letterSpacingPercent,
       },
       fontSize: g.info.fontSize,
+      isAlreadyGood: g.isAlreadyGood,
     })),
     totalLayers,
     uniqueGroups: groups.length,
