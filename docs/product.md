@@ -72,7 +72,7 @@ Build: esbuild with `target: es2017` (Figma sandbox constraint), single HTML out
 
 ## Roadmap
 
-- **v0.1** (current): core calculation, auto-apply, multi-font batch, code export
-- **v0.2**: Figma Variables writer (auto-create token collections with Light/Dark modes)
-- **v0.3**: custom formula editor, user-defined font profiles
-- **v1.0**: design system sync, Tokens Studio integration
+- **v0.1**: core calculation, auto-apply, multi-font batch, code export
+- **v0.2**: Figma Variables writer
+- **v2.0** (current): pixel grid snapping, text style sync, changelog panel, well-tuned detection, fixed layout UI, 67 unit tests
+- **Next**: custom formula editor, user-defined font profiles, design system sync, Tokens Studio integration
