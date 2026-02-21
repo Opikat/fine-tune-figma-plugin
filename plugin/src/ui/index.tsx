@@ -219,11 +219,13 @@ function App() {
     </div>
   );
 
+  const hasResults = hasSelection && results.length > 0;
+
   return (
     <>
-      {/* === Scrollable main area === */}
-      <div class="main-scroll">
-        {!hasSelection ? (
+      {/* === Fixed top: header or empty state === */}
+      {!hasSelection ? (
+        <div class="main-scroll">
           <div class="empty-state">
             <div class="empty-state-icon">Aa</div>
             <div class="empty-state-text">
@@ -231,45 +233,54 @@ function App() {
               line-height and letter-spacing
             </div>
           </div>
-        ) : results.length === 0 ? (
+        </div>
+      ) : results.length === 0 ? (
+        <div class="main-scroll">
           <div class="empty-state">
             <div class="empty-state-icon">...</div>
             <div class="empty-state-text">
               No text layers in selection
             </div>
           </div>
-        ) : (
-          <>
-            {/* Results */}
-            <div class="section">
-              <div class="section-title">
-                {results.length === 1
-                  ? 'Result'
-                  : `${results.length} unique style${results.length > 1 ? 's' : ''} (${totalLayers} layer${totalLayers !== 1 ? 's' : ''})`}
-              </div>
-              <div class="results-list">
-                {fixable.map(({ r, idx }) => renderCard(r, idx))}
-              </div>
+        </div>
+      ) : (
+        <>
+          {/* Fixed top header */}
+          <div class="top-header">
+            <div class="section-title">
+              {results.length === 1
+                ? 'Result'
+                : `${results.length} unique style${results.length > 1 ? 's' : ''} (${totalLayers} layer${totalLayers !== 1 ? 's' : ''})`}
+            </div>
+          </div>
 
-              {/* Collapsible good section */}
-              {good.length > 0 && (
-                <>
-                  <button
-                    class="good-toggle"
-                    onClick={() => setShowGood(!showGood)}
-                  >
-                    <span>{good.length} well-tuned style{good.length !== 1 ? 's' : ''}</span>
-                    <span class={`good-toggle-arrow${showGood ? ' open' : ''}`}>&#9654;</span>
-                  </button>
-                  {showGood && (
-                    <div class="results-list">
-                      {good.map(({ r, idx }) => renderCard(r, idx))}
-                    </div>
-                  )}
-                </>
-              )}
+          {/* Scrollable results only */}
+          <div class="main-scroll">
+            <div class="results-list">
+              {fixable.map(({ r, idx }) => renderCard(r, idx))}
             </div>
 
+            {/* Collapsible good section */}
+            {good.length > 0 && (
+              <>
+                <button
+                  class="good-toggle"
+                  onClick={() => setShowGood(!showGood)}
+                >
+                  <span>{good.length} well-tuned style{good.length !== 1 ? 's' : ''}</span>
+                  <span class={`good-toggle-arrow${showGood ? ' open' : ''}`}>&#9654;</span>
+                </button>
+                {showGood && (
+                  <div class="results-list">
+                    {good.map(({ r, idx }) => renderCard(r, idx))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Fixed middle: Apply + Export */}
+          <div class="middle-bar">
             {/* Apply button + log badge */}
             <div class="apply-row">
               <button class="btn btn-primary" onClick={handleApplySelected}>
@@ -319,9 +330,9 @@ function App() {
                 </div>
               )}
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
 
       {/* === Settings pinned to bottom === */}
       <div class="bottom-bar">

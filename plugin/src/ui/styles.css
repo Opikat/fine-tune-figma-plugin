@@ -14,7 +14,7 @@ body {
   overflow: hidden;
 }
 
-/* === Fixed layout: scroll top, settings bottom === */
+/* === Fixed layout: header top, scroll middle, controls + settings bottom === */
 #app {
   height: 100%;
   display: flex;
@@ -22,14 +22,29 @@ body {
   overflow: hidden;
 }
 
+.top-header {
+  flex-shrink: 0;
+  padding: 12px 12px 0;
+}
+
 .main-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px;
+  padding: 8px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+}
+
+.middle-bar {
+  flex-shrink: 0;
+  border-top: 1px solid var(--figma-color-border, #e5e5e5);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--figma-color-bg, #fff);
 }
 
 .bottom-bar {
